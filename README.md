@@ -93,4 +93,47 @@ just send it to stdout for easy copy/paste to the router.
 ```
 $ ./generate.py -r core1 -c -p '*anycast*' -o - 
 Generating from peerings.json to - using cisco.j2 as template
+!
+! begin for dnscahce
+!
+ip prefix-list as64553-prefix permit 192.0.2.53/32
+ip prefix-list as64553-prefix deny 0.0.0.0/0 le 32
+
+ipv6 prefix-list as64553-prefix permit 2001:db8:ac::53/128
+ipv6 prefix-list as64553-prefix deny ::/0 le 128
+
+route-map as64553-in permit 10
+  match ip address prefix-list as64553-prefix
+  match ipv6 address prefix-list as64553-prefix
+
+route-map as64553-in deny 100
+
+
+! begin core1
+router bgp 64512
+ neighbor 192.0.2.1 remote-as 64553
+ neighbor 192.0.2.1 version 4
+ neighbor 192.0.2.1 timers 5 20
+ neighbor 192.0.2.1 description dnscahce
+ address-family ipv4
+  no neighbor 2001:DB8::1 activate
+  neighbor 192.0.2.1 activate
+  neighbor 192.0.2.1 default-originate
+  neighbor 192.0.2.1 soft-reconfiguration inbound
+  neighbor 192.0.2.1 route-map as64553-in in
+  neighbor 192.0.2.1 route-map defaultonly out
+ exit-address-family
+ address-family ipv6
+  neighbor 2001:DB8::1 activate
+  neighbor 2001:DB8::1 default-originate
+  neighbor 2001:DB8::1 soft-reconfiguration inbound
+  neighbor 2001:DB8::1 route-map as64553-in in
+  neighbor 2001:DB8::1 route-map defaultonly out
+ exit-address-family
+
+! end core1
+
+!
+! end for dnscahce
+!
 ```
