@@ -1,0 +1,52 @@
+!
+! begin for {{ title }}
+!
+{% for prefix in prefixes.ipv4 -%}
+ip prefix-list as{{ asnumber }}-prefix permit {{ prefix }}
+{% endfor -%}
+ip prefix-list as{{ asnumber }}-prefix deny 0.0.0.0/0 le 32
+
+{% for prefix in prefixes.ipv6 -%}
+ipv6 prefix-list as{{ asnumber }}-prefix permit {{ prefix }}
+{% endfor -%}
+ipv6 prefix-list as{{ asnumber }}-prefix deny ::/0 le 128
+
+route-map as{{ asnumber }}-in permit 10
+  match ip address prefix-list as{{ asnumber }}-prefix
+  match ipv6 address prefix-list as{{ asnumber }}-prefix
+
+route-map as{{ asnumber }}-in deny 100
+
+{% for router in peerings %}
+! begin {{ router }}
+router bgp {{ peerings[router].asnumber }}
+ neighbor {{ peerings[router].ipv4 }} remote-as {{ asnumber }}
+ neighbor {{ peerings[router].ipv4 }} version 4
+ neighbor {{ peerings[router].ipv4 }} timers 5 20
+ neighbor {{ peerings[router].ipv4 }} description {{ title }}
+{%- if peerings[router].ipv4 %}
+ address-family ipv4
+{%- if peerings[router].ipv6 %}
+  no neighbor {{ peerings[router].ipv6|upper }} activate
+{%- endif %}
+  neighbor {{ peerings[router].ipv4 }} activate
+  neighbor {{ peerings[router].ipv4 }} default-originate
+  neighbor {{ peerings[router].ipv4 }} soft-reconfiguration inbound
+  neighbor {{ peerings[router].ipv4 }} route-map as{{ asnumber }}-in in
+  neighbor {{ peerings[router].ipv4 }} route-map defaultonly out
+ exit-address-family
+{%- endif %}
+{%- if peerings[router].ipv6 %}
+ address-family ipv6
+  neighbor {{ peerings[router].ipv6|upper }} activate
+  neighbor {{ peerings[router].ipv6|upper }} default-originate
+  neighbor {{ peerings[router].ipv6|upper }} soft-reconfiguration inbound
+  neighbor {{ peerings[router].ipv6|upper }} route-map as{{ asnumber }}-in in
+  neighbor {{ peerings[router].ipv6|upper }} route-map defaultonly out
+ exit-address-family
+{% endif %}
+! end {{ router }}
+{% endfor %}
+!
+! end for {{ title }}
+!

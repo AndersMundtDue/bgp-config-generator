@@ -1,0 +1,34 @@
+{%- for router in peerings %}
+{%- if peerings[router].ipv4 %}
+{%- for prefix in prefixes.ipv4 %}
+set policy-options policy-statement as{{ peerings[router].asnumber }}-filterv4 term 1 from route-filter {{ prefix }}
+{%- endfor %}
+set policy-options policy-statement as{{ peerings[router].asnumber }}-filterv4 term 1 then accept
+set policy-options policy-statement as{{ peerings[router].asnumber }}-filterv4 term 2 then reject
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv4 }} description {{ title }}
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv4 }} import as{{ peerings[router].asnumber }}-filterv4
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv4 }} peer-as {{ peerings[router].asnumber }}
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv4 }} local-as {{ asnumber }}
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv4 }} log-updown
+{%- endif %}
+{%- if peerings[router].ipv6 %}
+{%- for prefix in prefixes.ipv6 %}
+set policy-options policy-statement as{{ peerings[router].asnumber }}-filterv6 term 1 from route-filter {{ prefix }}
+{%- endfor %}
+set policy-options policy-statement as{{ peerings[router].asnumber }}-filterv6 term 1 then accept
+set policy-options policy-statement as{{ peerings[router].asnumber }}-filterv6 term 2 then reject
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv6 }} description {{ title }}
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv6 }} import as{{ peerings[router].asnumber }}-filterv6
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv6 }} peer-as {{ peerings[router].asnumber }}
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv6 }} local-as {{ asnumber }}
+set protocols bgp group autogen-{{ router }} neighbor {{ peerings[router].ipv6 }} log-updown
+{%- endif %}
+edit protocols bgp group autogen-{{ router }}
+{%- if peerings[router].ipv4 %}
+annotate neighbor {{ peerings[router].ipv4 }} "notice, there's no export filter"
+{%- endif %}
+{%- if peerings[router].ipv6 %}
+annotate neighbor {{ peerings[router].ipv6 }} "notice, there's no export filter"
+{%- endif %}
+top
+{%- endfor %}

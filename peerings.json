@@ -1,0 +1,14 @@
+{
+   "anycastdns": {
+      "title" : "dnscahce",
+      "asnumber" : 64553,
+      "prefixes" : {
+         "ipv4" : [ "192.0.2.53/32" ],
+         "ipv6" : [ "2001:db8:ac::53/128" ]
+      },
+      "peerings" : {
+         "core1" : { "asnumber": 64512, "ipv4" : "192.0.2.1", "ipv6" : "2001:db8::1" },
+         "core2" : { "asnumber": 64512, "ipv4" : "192.0.2.2", "ipv6" : "2001:db8::2" }
+      }
+   }
+}

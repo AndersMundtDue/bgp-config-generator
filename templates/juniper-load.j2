@@ -1,0 +1,44 @@
+policy-options {
+	policy-statement as{{ asnumber }}-filterv4 {
+		term 1 {
+			from {
+				{% for prefix in prefixes.ipv4 -%}
+				route-filter {{ prefix }};
+				{% endfor -%}
+			}
+			then accept;
+		}
+		term 2 {
+			then reject;
+		}
+	}
+	policy-statement as{{ asnumber }}-filterv6 {
+		term 1 {
+			from {
+				{% for prefix in prefixes.ipv6 -%}
+				route-filter {{ prefix }};
+				{% endfor -%}
+			}
+			then accept;
+		}
+		term 2 {
+			then reject;
+		}
+	}
+}
+
+{% for router in peerings %}
+protocols {
+	bgp {
+		group autogen-{{ router }} {
+			neighbor {{ peerings[router].ipv4 }} {
+				description {{ title }};
+				import as{{ asnumber }}-filterv4;
+				export {{ router }}-exportv4;
+				peer-as {{ asnumber }};
+				log-updown;
+			}
+		}
+	}
+}
+{% endfor %}
